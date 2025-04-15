@@ -1,6 +1,8 @@
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
+import matplotlib.pyplot as plt
 
 # 定义卡尔曼滤波器类
 class KalmanFilter:
@@ -47,8 +49,52 @@ class KalmanFilter:
     def get_state(self):
         return self.x
 
+
+# 读取 CSV 文件中的轨迹数据
+df = pd.read_csv('/home/dermark/objtrans/data/qvel_trajectory.csv')
+df2 = pd.read_csv('/home/dermark/objtrans/data/sim/qvel_trajectory.csv')
+
+df3 = pd.read_csv('/home/dermark/objtrans/data/qpos_trajectory.csv')
+df4 = pd.read_csv('/home/dermark/objtrans/data/sim/qpos_trajectory.csv')
+
+# 获取 DOF 数据（0 到 5）
+qvel_real = df[['q0', 'q1', 'q2', 'q3', 'q4', 'q5']].values  # 真实数据
+qvel_sim = df2[['q0', 'q1', 'q2', 'q3', 'q4', 'q5']].values  # 模拟数据
+
+qpos_real = df3[['q0', 'q1', 'q2', 'q3', 'q4', 'q5']].values  # 真实数据
+qpos_sim = df4[['q0', 'q1', 'q2', 'q3', 'q4', 'q5']].values  # 模拟数据
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # 模拟真实的运动轨迹（例如，位置和速度）
-time_steps = 100
+time_steps = 1000
 true_position = torch.zeros(time_steps)
 true_velocity = torch.zeros(time_steps)
 
@@ -64,8 +110,21 @@ for t in range(1, time_steps):
 # 添加噪声到观测值
 noise_position = torch.randn(time_steps) * 0.05  # 添加位置噪声
 noise_velocity = torch.randn(time_steps) * 0.2  # 添加速度噪声
-observed_position = true_position + noise_position
-observed_velocity = true_velocity + noise_velocity
+# observed_position = true_position + noise_position
+# observed_velocity = true_velocity + noise_velocity
+
+
+
+
+print(torch.tensor(qpos_real[:,0]),true_position)
+
+
+true_position = qpos_sim[:,0]
+true_velocity = qvel_sim[:,0]
+
+
+observed_position = qpos_real[:,0]
+observed_velocity = qvel_real[:,0]
 
 # 初始化卡尔曼滤波器
 kf = KalmanFilter(state_dim=2, observation_dim=2, dt=0.1)  # 2D 状态：位置和速度
@@ -74,9 +133,10 @@ kf = KalmanFilter(state_dim=2, observation_dim=2, dt=0.1)  # 2D 状态：位置�
 filtered_positions = []
 filtered_velocities = []
 
+print(observed_position)
 # 进行卡尔曼滤波
 for t in range(time_steps):
-    z = torch.tensor([observed_position[t], observed_velocity[t]])  # 当前观测值
+    z = torch.tensor([observed_position[t], observed_velocity[t]] , dtype=torch.float32)  # 当前观测值
     kf.predict()  # 预测
     kf.update(z)  # 更新
     state_estimate = kf.get_state()  # 获取滤波后的状态
@@ -90,16 +150,20 @@ plt.figure(figsize=(10, 6))
 
 # 绘制位置图
 plt.subplot(2, 1, 1)
-plt.plot(true_position.numpy(), label='True Position', linestyle='-', color='g')
-plt.plot(observed_position.numpy(), label='Observed Position', linestyle='--', color='r')
+# plt.plot(true_position.numpy(), label='True Position', linestyle='-', color='g')
+# plt.plot(observed_position.numpy(), label='Observed Position', linestyle='--', color='r')
+plt.plot(true_position, label='True Position', linestyle='-', color='g')
+plt.plot(observed_position, label='Observed Position', linestyle='--', color='r')
 plt.plot(filtered_positions, label='Filtered Position (Kalman)', linestyle='-', color='b')
 plt.title('Position Estimation')
 plt.legend()
 
 # 绘制速度图
 plt.subplot(2, 1, 2)
-plt.plot(true_velocity.numpy(), label='True Velocity', linestyle='-', color='g')
-plt.plot(observed_velocity.numpy(), label='Observed Velocity', linestyle='--', color='r')
+# plt.plot(true_velocity.numpy(), label='True Velocity', linestyle='-', color='g')
+# plt.plot(observed_velocity.numpy(), label='Observed Velocity', linestyle='--', color='r')
+plt.plot(true_velocity, label='True Velocity', linestyle='-', color='g')
+plt.plot(observed_velocity, label='Observed Velocity', linestyle='--', color='r')
 plt.plot(filtered_velocities, label='Filtered Velocity (Kalman)', linestyle='-', color='b')
 plt.title('Velocity Estimation')
 plt.legend()
